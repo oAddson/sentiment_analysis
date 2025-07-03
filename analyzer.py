@@ -34,24 +34,29 @@ class MessageAnalyzer:
 
     def _classify_humor(self, scores: dict, lemmas: list[str]) -> tuple[str, str]:
         cmpd = scores['compound']
-        # Intensidade emocional
-        if abs(cmpd) >= 0.7:
-            intensidade = 'extremo'
-        elif abs(cmpd) >= 0.5:
+        pos_score = scores['pos']
+        neg_score = scores['neg']
+
+        # Início com intensidade padrão baseada no VADER
+        if cmpd >= 0.5 or cmpd <= -0.5:
             intensidade = 'alto'
-        elif abs(cmpd) >= 0.3:
+        elif cmpd >= 0.3 or cmpd <= -0.3:
             intensidade = 'moderado'
         else:
             intensidade = 'leve'
 
-        # Definição de humor refinado
-        if any(a in lemmas for a in self.AMEACAS) and cmpd < -0.6:
+        # Elevação forçada por palavras fortes
+        if any(p in lemmas for p in self.AMEACAS + self.IRRITADO):
+            intensidade = 'alto'
+
+        # Definição de humor
+        if any(a in lemmas for a in self.AMEACAS) and cmpd < -0.4:
             humor = 'irritado-extremo'
         elif any(i in lemmas for i in self.IRRITADO):
             humor = 'irritado'
         elif cmpd >= 0.5:
             humor = 'positivo'
-        elif scores['pos'] > 0:
+        elif pos_score > 0.2:
             humor = 'agradecido'
         elif cmpd > -0.3:
             humor = 'neutro'

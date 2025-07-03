@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from analyzer import MessageAnalyzer
+from typing import List
+
 
 app = FastAPI(
     title="API Avançada de Análise de Mensagens",
@@ -34,3 +36,25 @@ def analisar(request: MessageRequest):
         dias_aberto=request.dias_aberto
     )
     return result
+class BatchMessageRequest(BaseModel):
+    mensagens: List[MessageRequest]
+
+class BatchMessageResponse(BaseModel):
+    resultados: List[MessageResponse]
+
+@app.post("/analisar/batch/", response_model=BatchMessageResponse)
+def analisar_em_batch(request: BatchMessageRequest):
+    resultados = []
+
+    for msg in request.mensagens:
+        if not msg.texto or not msg.texto.strip():
+            raise HTTPException(status_code=400, detail="Uma das mensagens está vazia.")
+        resultado = analyzer.analyze(
+            text=msg.texto,
+            canal=msg.canal,
+            tipo_cliente=msg.tipo_cliente,
+            dias_aberto=msg.dias_aberto
+        )
+        resultados.append(resultado)
+
+    return {"resultados": resultados}
