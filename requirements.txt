@@ -1,3 +1,4 @@
 fastapi==0.115.14
 uvicorn[standard]
 nltk~=3.9.1
+numpy
